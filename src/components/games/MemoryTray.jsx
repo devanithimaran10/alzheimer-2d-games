@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback } from "react";
 import GameLayout from "./GameLayout";
+import { useCognitiveScore } from "../../contexts/CognitiveScoreContext";
 import "./MemoryTray.css";
 
 const MemoryTray = () => {
+  const { updateGameScore } = useCognitiveScore();
   const allObjects = [
     { id: 1, name: "Keys", emoji: "🔑" },
     { id: 2, name: "Glasses", emoji: "👓" },
@@ -20,6 +22,8 @@ const MemoryTray = () => {
   const [selectedItems, setSelectedItems] = useState([]);
   const [showResult, setShowResult] = useState(false);
   const [score, setScore] = useState(0);
+  const [totalAttempts, setTotalAttempts] = useState(0);
+  const [sessionAccuracy, setSessionAccuracy] = useState(0);
 
   const startNewRound = useCallback(() => {
     const count = level === 1 ? 3 : 5;
@@ -59,25 +63,47 @@ const MemoryTray = () => {
   };
 
   const checkAnswer = (items = selectedItems) => {
+    let isCorrect = false;
+    let roundAccuracy = 0;
+
     if (level === 1) {
-      const correct =
+      isCorrect =
         items.length === 1 && objects.find((o) => o.id === items[0].id);
-      setShowResult(true);
-      if (correct) {
-        setScore(score + 1);
-      }
+      roundAccuracy = isCorrect ? 1.0 : 0.0;
     } else {
       // For hard level, check when they click "Check"
       const selectedIds = items.map((i) => i.id).sort();
       const correctIds = objects.map((o) => o.id).sort();
-      const isCorrect =
+      isCorrect =
         selectedIds.length === correctIds.length &&
         selectedIds.every((id, index) => id === correctIds[index]);
-      setShowResult(true);
+
+      // Calculate partial accuracy for hard level
       if (isCorrect) {
-        setScore(score + 1);
+        roundAccuracy = 1.0;
+      } else {
+        // Count how many correct items were selected
+        const correctSelected = selectedIds.filter((id) =>
+          correctIds.includes(id)
+        ).length;
+        roundAccuracy = correctSelected / correctIds.length;
       }
     }
+
+    setShowResult(true);
+
+    setTotalAttempts((prev) => {
+      const newTotal = prev + 1;
+      setScore((prevScore) => {
+        const newScore = isCorrect ? prevScore + 1 : prevScore;
+        // Calculate session accuracy
+        const newSessionAccuracy = newScore / newTotal;
+        setSessionAccuracy(newSessionAccuracy);
+        updateGameScore("memoryTray", newSessionAccuracy);
+        return newScore;
+      });
+      return newTotal;
+    });
   };
 
   const allDistractors = [...allObjects].filter(

@@ -1,8 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import GameLayout from "./GameLayout";
+import { useCognitiveScore } from "../../contexts/CognitiveScoreContext";
 import "./FacesAndNames.css";
 
 const FacesAndNames = () => {
+  const { updateGameScore } = useCognitiveScore();
   // Using emojis as placeholders - in real implementation, use actual photos
   const people = [
     { id: 1, name: "Grandson", emoji: "👦", relationship: "Grandson" },
@@ -22,6 +24,7 @@ const FacesAndNames = () => {
   const [selectedName, setSelectedName] = useState(null);
   const [matchedPairs, setMatchedPairs] = useState([]);
   const [showResult, setShowResult] = useState(false);
+  const [totalAttempts, setTotalAttempts] = useState(0);
 
   const availablePeople = people.filter(
     (p) => !matchedPairs.find((pair) => pair.person.id === p.id)
@@ -37,11 +40,23 @@ const FacesAndNames = () => {
       setSelectedPerson(null);
       setSelectedName(null);
       setShowResult(true);
+      setTotalAttempts((prev) => {
+        const newTotal = prev + 1;
+        const accuracy = (matchedPairs.length + 1) / newTotal;
+        updateGameScore("facesAndNames", accuracy);
+        return newTotal;
+      });
       setTimeout(() => setShowResult(false), 1500);
     } else if (selectedName) {
       // Wrong match
       setSelectedPerson(null);
       setSelectedName(null);
+      setTotalAttempts((prev) => {
+        const newTotal = prev + 1;
+        const accuracy = matchedPairs.length / newTotal;
+        updateGameScore("facesAndNames", accuracy);
+        return newTotal;
+      });
     } else {
       setSelectedPerson(person);
     }
@@ -54,11 +69,23 @@ const FacesAndNames = () => {
       setSelectedPerson(null);
       setSelectedName(null);
       setShowResult(true);
+      setTotalAttempts((prev) => {
+        const newTotal = prev + 1;
+        const accuracy = (matchedPairs.length + 1) / newTotal;
+        updateGameScore("facesAndNames", accuracy);
+        return newTotal;
+      });
       setTimeout(() => setShowResult(false), 1500);
     } else if (selectedPerson) {
       // Wrong match
       setSelectedPerson(null);
       setSelectedName(null);
+      setTotalAttempts((prev) => {
+        const newTotal = prev + 1;
+        const accuracy = matchedPairs.length / newTotal;
+        updateGameScore("facesAndNames", accuracy);
+        return newTotal;
+      });
     } else {
       setSelectedName(name);
     }
@@ -68,6 +95,7 @@ const FacesAndNames = () => {
     setMatchedPairs([]);
     setSelectedPerson(null);
     setSelectedName(null);
+    setTotalAttempts(0);
   };
 
   const allMatched = matchedPairs.length === people.length;

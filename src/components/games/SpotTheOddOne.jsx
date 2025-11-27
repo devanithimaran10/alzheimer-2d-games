@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import GameLayout from "./GameLayout";
+import { useCognitiveScore } from "../../contexts/CognitiveScoreContext";
 import "./SpotTheOddOne.css";
 
 const SpotTheOddOne = () => {
@@ -51,11 +52,13 @@ const SpotTheOddOne = () => {
     },
   ];
 
+  const { updateGameScore } = useCognitiveScore();
   const [currentPuzzle, setCurrentPuzzle] = useState(0);
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [showResult, setShowResult] = useState(false);
   const [score, setScore] = useState(0);
   const [shuffledItems, setShuffledItems] = useState([]);
+  const [totalAttempts, setTotalAttempts] = useState(0);
 
   useEffect(() => {
     const items = [...puzzles[currentPuzzle].items];
@@ -77,9 +80,16 @@ const SpotTheOddOne = () => {
     setSelectedIndex(index);
     setShowResult(true);
 
-    if (isCorrect) {
-      setScore(score + 1);
-    }
+    setTotalAttempts((prev) => {
+      const newTotal = prev + 1;
+      setScore((prevScore) => {
+        const newScore = isCorrect ? prevScore + 1 : prevScore;
+        const accuracy = newScore / newTotal;
+        updateGameScore("spotTheOddOne", accuracy);
+        return newScore;
+      });
+      return newTotal;
+    });
   };
 
   const nextPuzzle = () => {
@@ -91,6 +101,7 @@ const SpotTheOddOne = () => {
     setScore(0);
     setSelectedIndex(null);
     setShowResult(false);
+    setTotalAttempts(0);
   };
 
   const currentPuzzleData = puzzles[currentPuzzle];

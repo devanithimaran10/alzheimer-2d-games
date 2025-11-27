@@ -1,5 +1,6 @@
 import React, { useState, useRef } from "react";
 import GameLayout from "./GameLayout";
+import { useCognitiveScore } from "../../contexts/CognitiveScoreContext";
 import "./MusicalTimeTravel.css";
 
 const MusicalTimeTravel = () => {
@@ -36,10 +37,13 @@ const MusicalTimeTravel = () => {
     },
   ];
 
+  const { updateGameScore } = useCognitiveScore();
   const [currentSong, setCurrentSong] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [showResult, setShowResult] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [score, setScore] = useState(0);
+  const [totalAttempts, setTotalAttempts] = useState(0);
   const audioRef = useRef(null);
 
   const handlePlay = () => {
@@ -55,6 +59,17 @@ const MusicalTimeTravel = () => {
     setSelectedAnswer(answerIndex);
     const correct = answerIndex === songs[currentSong].correctAnswer;
     setShowResult(true);
+
+    setTotalAttempts((prev) => {
+      const newTotal = prev + 1;
+      setScore((prevScore) => {
+        const newScore = correct ? prevScore + 1 : prevScore;
+        const accuracy = newScore / newTotal;
+        updateGameScore("musicalTimeTravel", accuracy);
+        return newScore;
+      });
+      return newTotal;
+    });
   };
 
   const nextSong = () => {
@@ -63,6 +78,15 @@ const MusicalTimeTravel = () => {
     setSelectedAnswer(null);
     setShowResult(false);
     setIsPlaying(false);
+  };
+
+  const reset = () => {
+    setCurrentSong(0);
+    setSelectedAnswer(null);
+    setShowResult(false);
+    setIsPlaying(false);
+    setScore(0);
+    setTotalAttempts(0);
   };
 
   const currentSongData = songs[currentSong];

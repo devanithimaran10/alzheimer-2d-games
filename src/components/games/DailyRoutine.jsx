@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import GameLayout from "./GameLayout";
+import { useCognitiveScore } from "../../contexts/CognitiveScoreContext";
 import "./DailyRoutine.css";
 
 const DailyRoutine = () => {
@@ -33,6 +34,7 @@ const DailyRoutine = () => {
     },
   ];
 
+  const { updateGameScore } = useCognitiveScore();
   const [currentRoutine, setCurrentRoutine] = useState(0);
   const [selectedSteps, setSelectedSteps] = useState([]);
   const [availableSteps, setAvailableSteps] = useState(
@@ -40,6 +42,8 @@ const DailyRoutine = () => {
   );
   const [showHint, setShowHint] = useState(false);
   const [completed, setCompleted] = useState(false);
+  const [score, setScore] = useState(0);
+  const [totalAttempts, setTotalAttempts] = useState(0);
 
   const handleStepClick = (step) => {
     if (completed) return;
@@ -60,6 +64,17 @@ const DailyRoutine = () => {
 
   const checkOrder = () => {
     const correct = selectedSteps.every((step, index) => step.id === index + 1);
+    setTotalAttempts((prev) => {
+      const newTotal = prev + 1;
+      setScore((prevScore) => {
+        const newScore = correct ? prevScore + 1 : prevScore;
+        const accuracy = newScore / newTotal;
+        updateGameScore("dailyRoutine", accuracy);
+        return newScore;
+      });
+      return newTotal;
+    });
+
     if (correct) {
       setCompleted(true);
     } else {
@@ -104,6 +119,8 @@ const DailyRoutine = () => {
     );
     setCompleted(false);
     setShowHint(false);
+    setScore(0);
+    setTotalAttempts(0);
   };
 
   return (

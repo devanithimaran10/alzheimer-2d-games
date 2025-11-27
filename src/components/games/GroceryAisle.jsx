@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import GameLayout from "./GameLayout";
+import { useCognitiveScore } from "../../contexts/CognitiveScoreContext";
 import "./GroceryAisle.css";
 
 const GroceryAisle = () => {
@@ -62,8 +63,11 @@ const GroceryAisle = () => {
     }, {})
   );
 
+  const { updateGameScore } = useCognitiveScore();
   const [draggedItem, setDraggedItem] = useState(null);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [correctItems, setCorrectItems] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
 
   const handleDragStart = (item) => {
     setDraggedItem(item);
@@ -74,6 +78,17 @@ const GroceryAisle = () => {
 
     const category = categories.find((cat) => cat.name === categoryName);
     const isCorrect = category.items.find((item) => item.id === draggedItem.id);
+
+    setTotalItems((prev) => {
+      const newTotal = prev + 1;
+      setCorrectItems((prevCorrect) => {
+        const newCorrect = isCorrect ? prevCorrect + 1 : prevCorrect;
+        const accuracy = newCorrect / newTotal;
+        updateGameScore("groceryAisle", accuracy);
+        return newCorrect;
+      });
+      return newTotal;
+    });
 
     if (isCorrect) {
       // Correct category
@@ -117,6 +132,8 @@ const GroceryAisle = () => {
       }, {})
     );
     setDraggedItem(null);
+    setCorrectItems(0);
+    setTotalItems(0);
   };
 
   const allSorted = availableItems.length === 0;

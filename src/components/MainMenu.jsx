@@ -13,8 +13,8 @@ const MainMenu = () => {
     },
     {
       path: "/musical-time-travel",
-      name: "Musical Time Travel",
-      description: "Finish the lyric",
+      name: "Purble Pairs",
+      description: "Match the pairs",
     },
     {
       path: "/memory-tray",
